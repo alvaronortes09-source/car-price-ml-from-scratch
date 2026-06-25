@@ -9,8 +9,8 @@ The goal of this project is to master the mathematical foundations of regression
 ## 📊 Project Roadmap
 
 - [x] **Day 1: Advanced Data Preprocessing & Target Isolation**
-- [ ] **Day 2:** Vectorized Logistic Regression Cost & Gradient Functions
-- [ ] **Day 3:** Gradient Descent Optimization for Fuel Type Classification
+- [x] **Day 2: Vectorized Logistic Regression Cost & Gradient Engines**
+- [x] **Day 3: Gradient Descent Optimization & Model Interpretability**
 - [ ] **Day 4:** Linear Regression Implementation for Price Prediction
 - [ ] **Day 5:** Feature Engineering & L2 Regularization (Ridge Penalty)
 - [ ] **Day 6:** Model Evaluation & Scikit-Learn Benchmarking
@@ -31,7 +31,7 @@ Today I built the data ingestion and normalization pipeline in `main.py` using a
 
 ---
 
-## Day 2: Core Logistic Regression Engine
+## 🧠 Day 2 Summary: Core Logistic Regression Engine
 
 On Day 2, the core mathematical and optimization foundation of the Logistic Regression model was fully implemented from scratch using NumPy. The focus was shifted from data understanding to building an efficient, stable, and production-ready training architecture.
 
@@ -70,3 +70,37 @@ $$J(w,b) = -\frac{1}{m} \sum_{i=1}^{m} \left[ y^{(i)} \log(f_{w,b}(X^{(i)})) + (
 Where the classification prediction is defined by the sigmoid activation function:
 
 $$f_{w,b}(x) = \frac{1}{1 + e^{-(w \cdot x + b)}}$$
+
+---
+
+## 🚀 Day 3 Summary: Model Training & Feature Interpretability Pipeline
+
+On Day 3, the preprocessing pipeline from Day 1 and the mathematical engine from Day 2 were integrated into a unified execution flow. The model was trained successfully, and a decoupled presentation layer was designed to extract production-grade model insights.
+
+### Advanced Engineering Decisions & Rationale
+
+* **Decoupled Presentation Layer via Reusable Utilities (`utils.py`)**
+  * *The Challenge:* Mixing pure data science workflows (training loops) with UI/formatting code inside `main.py` violates the Separation of Concerns (SoC) principle, turning the file into a monolithic script that is difficult to maintain and scale.
+  * *The Solution:* Extracted the formatting, padding, and alignment logic into a generic function (`print_feature_importance`) inside a new dedicated `utils.py` module. This allows cross-project reuse and clean, isolated codebases.
+* **Robust Production Tabular Formatting**
+  * *The Challenge:* Features vary in character length (e.g., `peakrpm` vs `compressionratio`), which causes standard stdout print blocks to shift irregularly, making logs messy and unprofessional for engineering teams or recruiters.
+  * *The Solution:* Designed strict string formatting blocks (`{name:<22}` and `{weight:>15.4f}`) ensuring uniform column boundaries across different operating systems and terminal encodings, intentionally avoiding unstable non-UTF-8 visual elements (emojis).
+* **Mathematical Sorting by Absolute Magnitude**
+  * *The Challenge:* Features are naturally ordered based on the original dataset columns. Displaying them raw requires manual sorting to understand which factor dominates the network's behavior.
+  * *The Solution:* Engineered a custom sorting key using Python lambda structures (`key=lambda x: abs(x[1])`) to dynamically rank weights by absolute mathematical impact, highlighting top statistical triggers at the apex of the report.
+
+### Training Performance & Convergence Dynamics
+
+The optimization process achieved high efficiency, validating the math engine against the engine metrics:
+
+```text
+Starting Gradient Descent training...
+----------------------------------------
+Iteration     0: Cost = 0.6661
+Iteration  1000: Cost = 0.0107
+Iteration  2000: Cost = 0.0054
+Iteration  3000: Cost = 0.0036
+Convergence reached early at iteration  3269. Cost = 0.0033
+----------------------------------------
+Training completed successfully!
+Final optimized bias (b): -4.7741
