@@ -1,76 +1,82 @@
 import pandas as pd
 import numpy as np
+from logistic import gradient_descent_logistic
+from linear import gradient_descent_linear
+from utils import print_feature_importance
 
-# Prepare the dataset for Machine Learning processing
 def preparing_cars_data(file_path):
-    # Load the CSV file into a Pandas DataFrame
+    # Load dataset
     df = pd.read_csv(file_path)
     
-    # Create a binary target variable for Logistic Regression (1 for diesel, 0 for gas)
+    # Encode target variable: 1 (diesel), 0 (gas)
     df['is_diesel'] = (df['fueltype'] == 'diesel').astype(int)
     
-    # Select specific continuous features to train our models
+    # Select continuous features
     columns_X = ['horsepower', 'enginesize', 'curbweight', 'compressionratio', 'peakrpm']
     X = df[columns_X].values
     
-    # Apply Z-score Normalization (Feature Scaling)
+    # Z-score normalization
     X_mean = np.mean(X, axis=0)
     X_std = np.std(X, axis=0)
-    X_scaling = (X - X_mean) / X_std
+    X_scaled = (X - X_mean) / X_std
     
-    # Extract the target variables into separate NumPy arrays
-    y_lineal = df['price'].values          # Continuous target for Linear Regression
-    y_logistic = df['is_diesel'].values    # Binary target for Logistic Regression
+    # Extract targets
+    y_linear = df['price'].values
+    y_logistic = df['is_diesel'].values
     
-    # Crucial step: return the processed data to the main program
-    return X_scaling, y_lineal, y_logistic
+    return X_scaled, y_linear, y_logistic
+
 
 if __name__ == "__main__":
-    # The CSV file is in the same folder, so we give its exact name as an argument
+    # --- Data Pipeline ---
     X_scaled, y_lin, y_is_diesel = preparing_cars_data('CarPrice_Assignment.csv')
     feature_names = ['horsepower', 'enginesize', 'curbweight', 'compressionratio', 'peakrpm']
+    num_features = X_scaled.shape[1]
     
-    # Print execution summary to verify everything loaded correctly
-    print("--- Data Preprocessing Completed ---")
-    print(f"X matrix shape (samples, features): {X_scaled.shape}")
-    print(f"Linear regression target shape: {y_lin.shape}")
-    print(f"Logistic regression target shape: {y_is_diesel.shape}")
+    print("\n" + "="*60)
+    print("          AUTOMOTIVE ML PIPELINE - INITIALIZATION")
+    print("="*60)
+    print(f" -> X Matrix (Samples, Features) : {X_scaled.shape}")
+    print(f" -> Linear Target (Prices)       : {y_lin.shape}")
+    print(f" -> Logistic Target (Fuel Type)  : {y_is_diesel.shape}")
+    print("-" * 60)
     
+    # Hyperparameters
+    alpha = 0.1
+    iterations = 5000
 
-# ==========================================
-# TRAINING THE LOGISTIC REGRESSION MODEL
-# ==========================================
+    # --- Logistic Regression ---
+    print("\n[INFO] Training Logistic Regression Model...")
+    w_init_log = np.zeros(num_features,)
+    b_init_log = 0.0
+    
+    w_logistic, b_logistic, J_hist_log = gradient_descent_logistic(
+        X_scaled, y_is_diesel, w_init_log, b_init_log, alpha, iterations
+    )
+    
+    print(f" -> Final logistic bias (b): {b_logistic:.4f}")
+    print_feature_importance(feature_names, w_logistic, pos_label="DIESEL", neg_label="GAS")
 
-from logistic import gradient_descent_logistic
 
-# 1. Initialize parameters as floats
-num_features = X_scaled.shape[1]
-w_init = np.zeros(num_features,)
-b_init = 0.0
-
-# 2. Set of hyperparameters
-alpha = 0.1
-iterations = 5000
-
-print("Starting Gradient Descent training...")
-print("-" * 40)
-
-w_final, b_final, J_history = gradient_descent_logistic(
-    X_scaled,
-    y_is_diesel,
-    w_init,
-    b_init,
-    alpha,
-    iterations
-)
-
-print("-" * 40)
-print("Training completed successfully!")
-print(f"Final optimized bias (b): {b_final:.4f}")
-
-# =====================================================================
-# Feature Importance & Model Interpretability
-# =====================================================================
-from utils import print_feature_importance
-
-print_feature_importance(feature_names, w_final, pos_label="DIESEL", neg_label="GAS")
+    # --- Linear Regression ---
+    print("\n[INFO] Training Linear Regression Model...")
+    w_init_lin = np.zeros(num_features,)
+    b_init_lin = 0.0
+    
+    w_linear, b_linear, J_hist_lin = gradient_descent_linear(
+        X_scaled, y_lin, w_init_lin, b_init_lin, alpha, iterations
+    )
+    
+    print(f" -> Final linear bias (b): {b_linear:.4f}")
+    
+    # Display feature weights sorted by absolute magnitude
+    print("\n============================================================")
+    print(f"{'FEATURE NAME':<22} | {'OPTIMIZED WEIGHT':<16} | {'IMPACT ON PRICE'}")
+    print("============================================================")
+    
+    sorted_features = sorted(zip(feature_names, w_linear), key=lambda x: abs(x[1]), reverse=True)
+    
+    for feature, weight in sorted_features:
+        impact = "[+] Increases Price" if weight > 0 else "[-] Decreases Price"
+        print(f"{feature:<22} | {weight:>16.4f} | {impact}")
+    print("============================================================\n")
