@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy as np
-from logistic import gradient_descent_logistic
-from linear import gradient_descent_linear
-from utils import print_feature_importance
-from utils import mae_score, r2_score       
+from linear import CustomLinearRegression
+from logistic import CustomLogisticRegression
+from utils import print_feature_importance, mae_score, r2_score       
 from sklearn.linear_model import Ridge as SklearnRidge
+
 
 def preparing_cars_data(file_path):
     # Load dataset
@@ -48,40 +48,36 @@ if __name__ == "__main__":
     iterations = 5000
     lambda_reg = 10.0
 
-    # --- Logistic Regression ---
+    # ==============================================================================
+    # 2. CUSTOM LOGISTIC REGRESSION (FUEL TYPE CLASSIFICATION)
+    # ==============================================================================
     print("\n[INFO] Training Logistic Regression Model...")
-    w_init_log = np.zeros(num_features,)
-    b_init_log = 0.0
     
-    w_logistic, b_logistic, J_hist_log = gradient_descent_logistic(
-        X_scaled, y_is_diesel, w_init_log, b_init_log, alpha, iterations
-    )
+    # Training the logistic regression model
+    log_model = CustomLogisticRegression(alpha=alpha, iterations=iterations, lambda_reg=lambda_reg)
+    log_model.fit(X_scaled, y_is_diesel)
     
-    print(f" -> Final logistic bias (b): {b_logistic:.4f}")
-    print_feature_importance(feature_names, w_logistic, pos_label="DIESEL", neg_label="GAS")
+    # Printng all the calculated parameters
+    print(f" -> Final logistic bias (b): {log_model.b:.4f}")
+    print_feature_importance(feature_names, log_model.w, pos_label="DIESEL", neg_label="GAS")
     
-# ==============================================================================
+    # ==============================================================================
     # 3. CUSTOM LINEAR REGRESSION WITH RIDGE (L2) REGULARIZATION
     # ==============================================================================
     print("\n[TRAINING] Initializing Custom Linear Engine (Ridge L2)...")
     print("-" * 60)
     
-    # Initialize weights and bias to zero before starting the optimization loop
-    w_init_lin = np.zeros(num_features,)
-    b_init_lin = 0.0
+    # Training the linear regression model
+    lin_model = CustomLinearRegression(alpha=alpha, iterations=iterations, lambda_reg=lambda_reg)
+    lin_model.fit(X_scaled, y_lin)
     
-    # Execute gradient descent to find optimal parameters (w, b)
-    w_custom, b_custom, _ = gradient_descent_linear(
-        X_scaled, y_lin, w_init_lin, b_init_lin, alpha, iterations, lambda_=lambda_reg
-    )
+    #Prediction
+    y_pred_custom = lin_model.predict(X_scaled)
     
-    # Generate predictions using our optimized custom weights
-    y_pred_custom = np.dot(X_scaled, w_custom) + b_custom
-    
-    # Compute performance metrics to evaluate the model against the ground truth
+    # Compute performance metrics
     mae_custom = mae_score(y_lin, y_pred_custom)
     r2_custom = r2_score(y_lin, y_pred_custom)
-
+    
     # ==============================================================================
     # 4. INDUSTRY BENCHMARK: SCIKIT-LEARN VALIDATION
     # ==============================================================================
@@ -101,18 +97,16 @@ if __name__ == "__main__":
     mae_sk = mae_score(y_lin, y_pred_sk)
     r2_sk = r2_score(y_lin, y_pred_sk)
     
-# ==============================================================================
+    #==============================================================================
     # 5. PRODUCTION BENCHMARK & FEATURE IMPORTANCE REPORT
     # ==============================================================================
-    # Output a side-by-side technical audit comparing our custom mathematical engine 
-    # against the industry standard (Scikit-Learn).
-    
     print("\n" + "═"*75)
-    print("       MODEL AUDIT & FEATURE IMPORTANCE REPORT (CUSTOM VS SKLEARN)")
+    print("         MODEL AUDIT & FEATURE IMPORTANCE REPORT (CUSTOM VS SKLEARN)")
     print("═"*75)
     print(f" METRIC        | CUSTOM ENGINE       | SKLEARN BENCHMARK")
     print("-" * 75)
-    print(f" Mean Bias (b) | {b_custom:<19.4f} | {sk_model.intercept_:<19.4f}")
+    # FIXED: Accedemos a lin_model.b en lugar de b_custom
+    print(f" Mean Bias (b) | {lin_model.b:<19.4f} | {sk_model.intercept_:<19.4f}")
     print(f" MAE ($)       | ${mae_custom:<18.2f} | ${mae_sk:<18.2f}")
     print(f" R² Score      | {r2_custom:<19.4f} | {r2_sk:<19.4f}")
     print("=" * 75)
@@ -121,14 +115,9 @@ if __name__ == "__main__":
     print(f"{'FEATURE':<18} | {'CUSTOM WEIGHT':<15} | {'SKLEARN WEIGHT':<15} | {'PRICE IMPACT'}")
     print("-" * 75)
     
-    # Pack feature names with their respective custom and sklearn weights.
-    # Sort the tuples in descending order based on the absolute value of our custom weight (x[1]).
-    # This prioritizes variables that have the highest magnitude of impact on the target (price).
-    sorted_features = sorted(zip(feature_names, w_custom, sk_model.coef_), key=lambda x: abs(x[1]), reverse=True)
+    sorted_features = sorted(zip(feature_names, lin_model.w, sk_model.coef_), key=lambda x: abs(x[1]), reverse=True)
     
-    # Iterate through the sorted features to map raw mathematical weights to business logic.
     for name, w_c, w_s in sorted_features:
-        # Determine price directionality: positive weights inflate price, negative weights deflate it.
         impact = "[+] Increases Price" if w_c > 0 else "[-] Decreases Price"
         print(f"{name:<18} | {w_c:<15.4f} | {w_s:<15.4f} | {impact}")
     print("=" * 75 + "\n")
