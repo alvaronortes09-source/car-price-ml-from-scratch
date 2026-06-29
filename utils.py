@@ -23,3 +23,11 @@ def print_feature_importance(feature_names, weights, pos_label="POSITIVE", neg_l
         print(f"{name:<22} | {weight:>15.4f}  | {direction}")
 
     print("="*60 + "\n")
+    
+def mae_score(y_true, y_pred):
+    return np.mean(np.abs(y_true - y_pred))
+    
+def r2_score(y_true, y_pred):
+    ss_res = np.sum((y_true - y_pred) ** 2)
+    ss_tot = np.sum((y_true - np.mean(y_true)) ** 2)
+    return 1 - (ss_res / ss_tot)
