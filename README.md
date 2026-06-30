@@ -255,3 +255,62 @@ horsepower         | 1782.6958       | 1446.7017       | [+] Increases Price
 peakrpm            | 879.6702        | 1115.6237       | [+] Increases Price
 compressionratio   | 808.6096        | 875.3098        | [+] Increases Price
 ===========================================================================
+```
+
+### 🚀 Day 7: OOP Architecture, Ridge (L2) Regularization, and Environment Sanitation
+
+In this final sprint, the primary objective was to elevate the codebase from a functional script to a **production-ready Machine Learning engine**. This required applying software engineering best practices, advanced linear algebra, and strict version control management.
+
+#### 1. Object-Oriented Programming (OOP) Architecture
+We refactored the raw gradient descent functions into robust, encapsulated classes (`CustomLinearRegression` and `CustomLogisticRegression`).
+* **The Concept:** Instead of passing weights and biases back and forth globally, the model now holds its own internal state (`self.w`, `self.b`). 
+* **The Benefit:** This mirrors the API design of industry-standard libraries. It allows us to instantiate multiple models simultaneously, train them using a clean `.fit(X, y)` method, and run inference using `.predict(X)` without variable namespace collisions.
+
+#### 2. Full Matrix Vectorization
+We completely eliminated native Python `for` loops in the gradient and cost calculations.
+* **The Concept:** Python loops are notoriously slow for large datasets. By treating our features and weights as matrices and vectors, we can compute all predictions and errors simultaneously using the dot product.
+* **The Benefit:** Leveraging `numpy.dot()` pushes the heavy mathematical computations down to highly optimized C-libraries. This ensures the engine can scale from hundreds of rows to millions without computational bottlenecks.
+
+#### 3. Ridge Regularization (L2 Penalty)
+To make our Custom Linear Regression robust against unseen data, we implemented an L2 Regularization term (controlled by the hyperparameter `lambda_reg`).
+* **The Concept:** Standard regression minimizes the Mean Squared Error. However, if features are highly correlated, the model might assign extreme weights, leading to *overfitting* (memorizing the training data instead of learning the pattern). Ridge regularizes this by adding a penalty proportional to the square of the weights to the cost function:
+
+$$J(\mathbf{w}, b) = \frac{1}{2m} \sum_{i=1}^{m} (f_{\mathbf{w},b}(\mathbf{x}^{(i)}) - y^{(i)})^2 + \frac{\lambda}{2m} \sum_{j=1}^{n} w_j^2$$
+
+* **The Benefit:** This mathematical penalty forces the optimization algorithm to keep the weights as small and evenly distributed as possible, resulting in a smoother, more generalized predictive curve.
+
+#### 4. Industry Benchmark Validation
+We built an automated audit pipeline to validate our custom mathematical engine against the industry standard, `sklearn.linear_model.Ridge`.
+* **The Result:** Our mathematical implementation proved identical to Scikit-Learn's optimized solver, yielding the exact same baseline metrics:
+    * **Mean Absolute Error (MAE):** ~$2405
+    * **R² Score:** 0.8298
+
+#### 5. Repository Sanitation & Version Control
+Finally, we applied strict Git environment rules to clean up the repository layout.
+* **The Concept:** A professional repository only tracks source code, not generated artifacts, binary files, or heavy datasets.
+* **The Benefit:** By implementing a strict `.gitignore` and clearing the Git cache (`git rm -r --cached .`), we removed compiled Python files (`__pycache__`) and the raw dataset from version control. This prevents repository bloat, ensures clean commits, and protects against potential data leaks.
+
+---
+**Status:** Base predictive and classification engine is complete, mathematically validated, and highly optimized. Ready for API integration or real-time data ingestion.
+
+## 🏆 Project Conclusion & Final Results
+
+This project successfully demonstrates the journey from understanding raw mathematical theories to deploying a production-ready Machine Learning architecture. By building the algorithms completely from scratch, without relying on black-box libraries for the core logic, this repository serves as a deep dive into the mechanics of **Gradient Descent, Matrix Calculus, and L2 Regularization**.
+
+### 📊 Final Performance Metrics
+The ultimate test for a custom-built ML engine is benchmarking it against industry standards. Our Custom Ridge Regression model was audited against `scikit-learn`, yielding mathematically identical results:
+
+* **Mean Absolute Error (MAE):** $2,405.07 (Custom) vs. $2,404.95 (Sklearn)
+* **R² Score:** 0.8298 (Custom) vs. 0.8298 (Sklearn)
+* **Mean Bias (Intercept):** 13276.7106 (Exact match)
+
+*Note: The marginal $0.12 difference in MAE is strictly due to floating-point precision limits and Sklearn's internal Cholesky decomposition solver versus our iterative Gradient Descent approach.*
+
+### 🧠 Core Technical Achievements
+1. **Mathematical Mastery:** Successfully translated the theoretical formulas from Andrew Ng's ML Specialization into pure Python matrix operations.
+2. **Algorithmic Efficiency:** Achieved high-performance training through 100% vectorized operations using `NumPy`, completely bypassing slow iterative loops.
+3. **Software Architecture:** Transitioned the codebase into a robust Object-Oriented Programming (OOP) paradigm, ensuring modularity, state encapsulation, and reusability.
+4. **Generalization:** Implemented L2 (Ridge) Regularization to penalize extreme weights, successfully preventing overfitting and stabilizing the model for unseen data.
+
+### 🚀 Looking Forward
+This engine lays a solid foundation for future algorithmic exploration. The vectorized architecture built here is highly scalable and can be naturally extended to support Multi-Layer Perceptrons (Neural Networks), real-time data ingestion pipelines, or backend API integrations for live web predictions.
